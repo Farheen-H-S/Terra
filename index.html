@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terra - Earth Observation Animation</title>
+  <style>
+    /* 🎨 Body: Background, Fill Viewport, Center Content */
+    body {
+      background: radial-gradient(circle at center, #0b1d2a 40%, #051018 100%);
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden; 
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* 📺 VIDEO CONTAINER: Minimal Margin, Dynamic Sizing */
+    .video-frame {
+      position: relative;
+      width: min(95vw, calc(95vh * 16 / 9));
+      height: min(calc(95vw * 9 / 16), 95vh);
+      max-width: 1600px;
+      max-height: 900px; 
+      background: linear-gradient(145deg, #09212f, #0f3c53);
+      border-radius: 20px;
+      box-shadow: 0 0 30px rgba(0, 188, 212, 0.3);
+      overflow: hidden;
+    }
+    
+    /* 🎥 VIDEO: No Cropping */
+    .video-frame video {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        object-fit: contain; 
+        width: 100%; 
+        height: 100%; 
+        transform: translate(-50%, -50%); 
+        z-index: 1;
+        display: block; 
+    }
+
+    /* ⏯️ PLAY/PAUSE BUTTON: Base Style (Visible/Paused) */
+    .play-button {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      
+      /* Base state (when paused): semi-transparent background */
+      background-color: rgba(0, 188, 212, 0.8);
+      
+      border: none;
+      border-radius: 50%;
+      width: 90px;
+      height: 90px;
+      cursor: pointer;
+      transition: 0.3s;
+      z-index: 10;
+      opacity: 1; 
+      visibility: visible;
+    }
+    
+    /* Hover effect for the default Play button (when paused) */
+    .play-button:not(.playing):hover {
+      background-color: rgba(0, 188, 212, 1);
+      transform: translate(-50%, -50%) scale(1.1);
+      box-shadow: 0 0 15px rgba(0, 188, 212, 0.8);
+    }
+    
+    /* 🔥 FIX 1: Make the outer circle completely transparent and large when playing */
+    .play-button.playing {
+        /* CRITICAL FIX: Fully transparent background */
+        background-color: transparent; 
+        box-shadow: none; /* Remove shadow */
+        width: 120px;
+        height: 120px; /* Use a slightly larger invisible area for easier hover target */
+        opacity: 1; /* Button structure remains clickable */
+    }
+
+    /* 🔥 FIX 2: Bring the outer circle back on hover when playing */
+    .play-button.playing:hover {
+        background-color: rgba(0, 188, 212, 0.8); /* Re-show semi-transparent background */
+        width: 90px; /* Revert size for visual hover effect */
+        height: 90px;
+        transform: translate(-50%, -50%) scale(1.1);
+        box-shadow: 0 0 15px rgba(0, 188, 212, 0.8);
+    }
+    
+    /* Play/Pause Icon Common Styles */
+    .play-button::before,
+    .play-button::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        opacity: 0; 
+        transition: opacity 0.2s;
+        background-color: white;
+    }
+
+    /* ⏯️ PLAY ICON (Visible only when PAUSED) */
+    .play-button:not(.playing)::before {
+        /* Triangle for play icon */
+        width: 0;
+        height: 0;
+        border-left: 26px solid white;
+        border-top: 20px solid transparent;
+        border-bottom: 20px solid transparent;
+        left: 55%; 
+        opacity: 1; /* Show the Play Icon */
+        background-color: transparent;
+    }
+
+    /* ⏸️ PAUSE ICON (Hidden by default, shown on hover/when playing) */
+    .play-button.playing::before {
+        /* First bar of the pause icon */
+        width: 10px;
+        height: 40px;
+        left: 40%;
+        opacity: 0; /* Default Hidden */
+        background-color: white;
+    }
+    
+    .play-button.playing::after {
+        /* Second bar of the pause icon */
+        width: 10px;
+        height: 40px;
+        left: 60%;
+        opacity: 0; /* Default Hidden */
+        background-color: white;
+    }
+
+    /* 🔥 FIX 3: Show the Pause Icon ONLY when playing AND hovering */
+    .play-button.playing:hover::before,
+    .play-button.playing:hover::after {
+        opacity: 1; /* Makes the Pause icon appear */
+    }
+  </style>
+</head>
+<body>
+  
+  <div class="video-frame">
+    <video id="terra-video" preload="auto" src="Terra_Final_Animation.mp4"></video> 
+    <button id="play-btn" class="play-button"></button>
+  </div>
+
+<script>
+    const video = document.getElementById('terra-video');
+    const playButton = document.getElementById('play-btn');
+
+    // Add source tag programmatically
+    const source = document.createElement('source');
+    source.src = "Terra_Final_Animation A.mp4";
+    source.type = "video/mp4";
+    video.appendChild(source);
+
+    // Logic to toggle the 'playing' class and control video
+    playButton.addEventListener('click', () => {
+        if (video.paused || video.ended) {
+            video.play();
+        } else {
+            video.pause();
+        }
+    });
+
+    // Listen for the video playing event
+    video.addEventListener('play', () => {
+        playButton.classList.add('playing');
+    });
+
+    // Listen for the video pause event
+    video.addEventListener('pause', () => {
+        playButton.classList.remove('playing');
+    });
+
+    // Listen for the video end event (resetting to show the Play icon for replay)
+    video.addEventListener('ended', () => {
+        video.currentTime = 0;
+        playButton.classList.remove('playing');
+    });
+    
+    // Ensure button is visible when video is loaded and paused
+    video.addEventListener('loadeddata', () => {
+        if (video.paused) {
+            playButton.classList.remove('playing');
+        }
+    });
+</script>
